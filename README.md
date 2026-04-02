@@ -2,6 +2,9 @@
 
 macOS notifications for Claude Code that click to focus the right terminal window, even across Spaces.
 
+<!-- TODO: Add demo GIF showing notification → click → Space switch -->
+<!-- ![Demo](docs/demo.gif) -->
+
 ## Features
 
 - **Precise window focus** via TTY matching -- clicking a notification brings you to the exact terminal tab where Claude is running, not just the application
