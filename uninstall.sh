@@ -196,6 +196,23 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# Step 5 — Offer to restore Space auto-rearrange (mru-spaces)
+# ---------------------------------------------------------------------------
+MRU_CURRENT=$(defaults read com.apple.dock mru-spaces 2>/dev/null || echo "1")
+
+if [[ "$MRU_CURRENT" == "0" || "$MRU_CURRENT" == "false" ]]; then
+  echo ""
+  info "Space auto-rearrange (mru-spaces) is currently disabled."
+  info "This was likely set by the installer to improve click-to-focus reliability."
+  if confirm "Re-enable Space auto-rearrange?" n; then
+    defaults write com.apple.dock mru-spaces -bool true && killall Dock
+    ok "Space auto-rearrange re-enabled."
+  else
+    info "Keeping Space auto-rearrange disabled."
+  fi
+fi
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 echo ""
