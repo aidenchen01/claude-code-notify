@@ -1,20 +1,35 @@
 # claude-code-notify
 
-macOS notifications for Claude Code that click to focus the right terminal window, even across Spaces.
+> **macOS desktop notifications for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with click-to-focus** — get notified when Claude finishes a task, needs input, or requests permission, then click to jump straight to the right terminal window, even across Spaces/desktops.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![macOS](https://img.shields.io/badge/macOS-13%2B-brightgreen.svg)](https://www.apple.com/macos/)
+[![Shell Script](https://img.shields.io/badge/Shell-Bash-4EAA25.svg)](https://www.gnu.org/software/bash/)
 
 <!-- TODO: Add demo GIF showing notification → click → Space switch -->
 <!-- ![Demo](docs/demo.gif) -->
 
+## The Problem
+
+When running Claude Code in the terminal, you often switch away to other apps while Claude works. But when Claude finishes, needs your input, or asks for permission, **you have no way to know** — unless you keep checking the terminal. And if you have multiple terminal windows across multiple Spaces/desktops, finding the right one is even harder.
+
+## The Solution
+
+**claude-code-notify** uses [Claude Code hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) to send native macOS notifications via [`terminal-notifier`](https://github.com/julienXX/terminal-notifier). When you click a notification, it uses AppleScript + TTY matching to **focus the exact terminal tab** where Claude is running — even if it's on a different Space/desktop.
+
+No polling. No browser extension. Just native macOS notifications with precise window focus.
+
 ## Features
 
-- **Precise window focus** via TTY matching -- clicking a notification brings you to the exact terminal tab where Claude is running, not just the application
-- **Terminal.app + iTerm2 support** -- auto-detects your terminal or set it manually
-- **4 hook events** -- Stop, Notification, TeammateIdle, PermissionRequest
-- **Configurable sounds and messages** -- choose from any built-in macOS sound, customize titles and messages
-- **One-line install** -- clone and run `./install.sh`
-- **Clean uninstall** -- `./uninstall.sh` removes everything it installed
+- **Click-to-focus notifications** — clicking a notification brings you to the exact terminal tab where Claude Code is running, not just the application. Works across Spaces and multiple desktops
+- **TTY-based window matching** — uses `ps -o tty=` to identify the correct terminal tab, even when you have dozens open
+- **Terminal.app + iTerm2 support** — auto-detects your terminal at install time, or configure it manually
+- **4 Claude Code hook events** — Stop (task complete), Notification, TeammateIdle (waiting for input), PermissionRequest
+- **Customizable sounds and messages** — pick any built-in macOS sound, change notification titles and messages
+- **One-command install** — `git clone` + `./install.sh`, that's it
+- **Clean uninstall** — `./uninstall.sh` removes everything, including settings.json entries
 
-## Supported Events
+## Supported Hook Events
 
 | Event | Trigger | Default Sound | Default Message |
 |-------|---------|---------------|-----------------|
@@ -27,33 +42,35 @@ macOS notifications for Claude Code that click to focus the right terminal windo
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/anthropics/claude-code-notify.git
+git clone https://github.com/aidenchen01/claude-code-notify.git
 cd claude-code-notify
 
-# 2. Run the installer
+# 2. Run the installer (interactive — walks you through terminal & sound selection)
 ./install.sh
 
-# 3. Start using Claude Code -- notifications just work
+# 3. Start using Claude Code — notifications just work!
 claude
 ```
 
+> **Non-interactive mode:** Run `./install.sh --defaults` to install with default settings (Terminal.app, default sounds).
+
 ## Requirements
 
-- **macOS 13+** (Ventura or later; tested on macOS 26)
-- **Claude Code** (`claude` CLI in your PATH)
-- **Homebrew** (used to install terminal-notifier)
-- **python3** (used by the Notification hook to parse JSON from stdin)
+- **macOS 13+** (Ventura or later)
+- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code)** CLI (`claude` in your PATH)
+- **[Homebrew](https://brew.sh)** (used to install terminal-notifier)
+- **python3** (pre-installed on macOS; used to parse JSON from Notification hook stdin)
 
-## How It Works
+## How It Works — TTY Matching + AppleScript
 
-When Claude Code fires a hook event, it runs one of the shell scripts installed in `~/.claude/hooks/`. Each script:
+When Claude Code fires a [hook event](https://docs.anthropic.com/en/docs/claude-code/hooks), it runs one of the shell scripts installed in `~/.claude/hooks/`. Each hook script:
 
-1. **Captures the TTY** of the parent process (the terminal tab running Claude) via `$PPID`
-2. **Sends a notification** using `terminal-notifier` with a `-execute` callback containing an AppleScript
-3. **When you click the notification**, the AppleScript runs:
-   - Iterates through all windows and tabs of your terminal application
+1. **Captures the TTY** of the parent process (the terminal tab running Claude) via `ps -o tty= -p $PPID`
+2. **Sends a native macOS notification** using [`terminal-notifier`](https://github.com/julienXX/terminal-notifier) with a `-execute` callback containing an AppleScript command
+3. **When you click the notification**, the AppleScript:
+   - Iterates through all windows and tabs of your terminal application (Terminal.app or iTerm2)
    - Finds the one whose TTY matches the captured value
-   - Brings that window to the front (`set index of w to 1`) and activates the app -- this triggers a Space switch if the window is on a different desktop
+   - Brings that window to the front (`set index of w to 1`) and activates the app — **this triggers a macOS Space/desktop switch** if the window is on a different virtual desktop
 
 ```
                           Hook fires
@@ -288,6 +305,15 @@ See [FAQ.md](FAQ.md) for solutions to common issues, including:
 - Wrong window gets focused
 - Installation problems
 
+## How Is This Different From...
+
+| Approach | Click-to-Focus | Correct Tab | Space Switch | No Background Process |
+|----------|:-:|:-:|:-:|:-:|
+| **claude-code-notify** | Yes | Yes (TTY match) | Yes | Yes (hook-triggered) |
+| `say` / `afplay` in hook | No (audio only) | N/A | No | Yes |
+| Generic notification app | Yes (app-level) | No | Maybe | Varies |
+| tmux alert | No | N/A | No | Yes |
+
 ## Contributing
 
 Contributions are welcome! Here is how to help:
@@ -299,6 +325,12 @@ Contributions are welcome! Here is how to help:
 5. **Open a Pull Request** against `main`
 
 If you find a bug, please [open an issue](../../issues) using the provided issue template.
+
+## Related Projects
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — Anthropic's agentic coding tool
+- [Claude Code Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) — hook system that powers this tool
+- [terminal-notifier](https://github.com/julienXX/terminal-notifier) — the macOS notification CLI used under the hood
 
 ## License
 
