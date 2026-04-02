@@ -385,11 +385,11 @@ if [[ "$USE_DEFAULTS" == true ]]; then
   MERGE_STRATEGY="append"
 else
   # Check if any existing hooks would conflict
-  HAS_CONFLICTS=$(python3 -c "
-import json, sys
+  HAS_CONFLICTS=$(CCN_SETTINGS_PATH="$CCN_SETTINGS" CCN_HOOKS_JSON="$HOOKS_JSON" python3 -c "
+import json, sys, os
 
-settings_path = '$CCN_SETTINGS'
-hooks_json = json.loads('$HOOKS_JSON')
+settings_path = os.environ['CCN_SETTINGS_PATH']
+hooks_json = json.loads(os.environ['CCN_HOOKS_JSON'])
 
 with open(settings_path) as f:
     settings = json.load(f)
@@ -406,7 +406,6 @@ for h in hooks_json:
         elif isinstance(existing, dict) and 'command' in existing:
             cmds = [existing]
         for entry in cmds:
-            # Navigate nested structure: entry.hooks[].command
             is_ccn = False
             if isinstance(entry, dict):
                 for inner in entry.get('hooks', []):
@@ -414,7 +413,6 @@ for h in hooks_json:
                     if 'claude-code-notify' in c:
                         is_ccn = True
                         break
-                # Also check flat structure for backwards compatibility
                 if not is_ccn:
                     c = entry.get('command', '')
                     if 'claude-code-notify' in c:
@@ -450,14 +448,20 @@ else:
 fi
 
 # Perform the merge using Python for reliable JSON handling
-python3 <<PYEOF
+export CCN_SETTINGS_PATH="$CCN_SETTINGS"
+export CCN_HOOKS_JSON="$HOOKS_JSON"
+export CCN_MERGE_STRATEGY="$MERGE_STRATEGY"
+export CCN_MARKER_STR="$CCN_MARKER"
+
+python3 <<'PYEOF'
 import json
 import sys
+import os
 
-settings_path = "$CCN_SETTINGS"
-hooks_to_add = json.loads('''$HOOKS_JSON''')
-merge_strategy = "$MERGE_STRATEGY"
-marker = "$CCN_MARKER"
+settings_path = os.environ['CCN_SETTINGS_PATH']
+hooks_to_add = json.loads(os.environ['CCN_HOOKS_JSON'])
+merge_strategy = os.environ['CCN_MERGE_STRATEGY']
+marker = os.environ['CCN_MARKER_STR']
 
 # Load current settings
 with open(settings_path) as f:

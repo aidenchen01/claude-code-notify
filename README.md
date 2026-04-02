@@ -183,51 +183,47 @@ chmod +x ~/.claude/hooks/notify-*.sh
 
 ### 4. Register hooks in settings.json
 
-Edit `~/.claude/settings.json` and add the hooks array:
+Edit `~/.claude/settings.json` and add the hooks array. Replace `<username>` with your actual username (run `whoami` to check):
 
 ```json
 {
   "hooks": {
     "Stop": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/notify-stop.sh"
+            "command": "/Users/<username>/.claude/hooks/notify-stop.sh"
           }
         ]
       }
     ],
     "Notification": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/notify-notification.sh"
+            "command": "/Users/<username>/.claude/hooks/notify-notification.sh"
           }
         ]
       }
     ],
     "TeammateIdle": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/notify-idle.sh"
+            "command": "/Users/<username>/.claude/hooks/notify-idle.sh"
           }
         ]
       }
     ],
     "PermissionRequest": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/notify-permission.sh"
+            "command": "/Users/<username>/.claude/hooks/notify-permission.sh"
           }
         ]
       }
@@ -235,6 +231,8 @@ Edit `~/.claude/settings.json` and add the hooks array:
   }
 }
 ```
+
+> **Note:** You must use the absolute path to the hook scripts (not `bash ~/.claude/...` or `~/.claude/...`). This ensures `$PPID` correctly captures Claude Code's process ID for TTY matching.
 
 ## Uninstallation
 

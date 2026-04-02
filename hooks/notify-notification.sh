@@ -11,8 +11,11 @@ CCN_MSG_NOTIFICATION_FALLBACK="Claude has a notification"
 # Load user config (overrides defaults)
 source "$HOME/.claude/hooks/claude-code-notify.conf" 2>/dev/null
 
+# Read all stdin first (ensures it's drained even if python3 fails)
+INPUT=$(cat)
+
 # Parse message from stdin JSON, fallback to CCN_MSG_NOTIFICATION_FALLBACK
-MSG=$(python3 -c "
+MSG=$(echo "$INPUT" | python3 -c "
 import sys, json
 try:
     data = json.load(sys.stdin)

@@ -57,9 +57,20 @@ for hook_file in "${CCN_HOOK_FILES[@]}"; do
   fi
 done
 
-# Also check for notify-*.sh files that may have been copied there
+# Also check for any notify-*.sh files not in CCN_HOOK_FILES (catches renamed/legacy files)
 for notify_script in "${CCN_HOOKS_DIR}"/notify-*.sh; do
   [[ -f "$notify_script" ]] || continue
+  # Skip if already handled by the CCN_HOOK_FILES loop above
+  local_base="${notify_script##*/}"
+  already_handled=false
+  for known in "${CCN_HOOK_FILES[@]}"; do
+    if [[ "$known" == "$local_base" ]]; then
+      already_handled=true
+      break
+    fi
+  done
+  $already_handled && continue
+
   if grep -q "claude-code-notify" "$notify_script" 2>/dev/null; then
     rm -- "$notify_script"
     ok "Removed ${notify_script}"
@@ -79,22 +90,8 @@ if [[ -f "$CCN_CONF" ]]; then
   rm -- "$CCN_CONF"
   ok "Removed ${CCN_CONF}"
   removed_conf=true
-  # Remove parent dir if now empty
-  conf_dir="$(dirname "$CCN_CONF")"
-  if [[ -d "$conf_dir" ]] && [[ -z "$(ls -A "$conf_dir")" ]]; then
-    rmdir -- "$conf_dir"
-    ok "Removed empty directory ${conf_dir}"
-  fi
 else
   info "Config file not found — nothing to remove."
-fi
-
-# Also check the legacy location in hooks dir
-legacy_conf="${CCN_HOOKS_DIR}/claude-code-notify.conf"
-if [[ -f "$legacy_conf" ]]; then
-  rm -- "$legacy_conf"
-  ok "Removed ${legacy_conf}"
-  removed_conf=true
 fi
 
 # ---------------------------------------------------------------------------
