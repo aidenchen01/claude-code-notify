@@ -91,6 +91,18 @@ For Space switching to work, macOS must allow applications to move you to the Sp
 
 This is the most common cause of click-not-switching-Space issues.
 
+### Space auto-rearrange is enabled
+
+If your Spaces keep changing order, macOS may be automatically rearranging them based on recent use. This interferes with click-to-focus Space switching. Disable it:
+
+```bash
+defaults write com.apple.dock mru-spaces -bool false && killall Dock
+```
+
+Or go to **System Settings** > **Desktop & Dock** > **Mission Control** and turn off **"Automatically rearrange Spaces based on most recent use"**.
+
+> **Note:** `./install.sh` disables this automatically during installation.
+
 ### Terminal type mismatch
 
 If you use iTerm2 but your config says `CCN_TERMINAL="terminal"` (or vice versa), the AppleScript will look through the wrong application's windows and find nothing.
