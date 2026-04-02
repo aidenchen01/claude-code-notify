@@ -126,12 +126,12 @@ CCN_HOOKS_DIR="$HOME/.claude/hooks"
 CCN_SETTINGS="$HOME/.claude/settings.json"
 
 # claude-code-notify runtime config (stores user preferences)
-CCN_CONF="$HOME/.config/claude-code-notify/config.sh"
+CCN_CONF="$HOME/.claude/hooks/claude-code-notify.conf"
 
 # All hook entry-point filenames that this tool manages
 CCN_HOOK_FILES=(
-  "pre-tool-use.sh"
-  "post-tool-use.sh"
-  "notification.sh"
-  "stop.sh"
+  "notify-notification.sh"
+  "notify-stop.sh"
+  "notify-idle.sh"
+  "notify-permission.sh"
 )

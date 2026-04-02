@@ -36,14 +36,19 @@ else
     SOUND_ARG=()
 fi
 
-# Build ACTIVATE_CMD based on CCN_TERMINAL
+# Send notification (background so hook returns quickly)
 if [ "$CCN_TERMINAL" = "iterm2" ]; then
-    ACTIVATE_CMD='tell application "iTerm2"
+    terminal-notifier \
+        -message "$MSG" \
+        -title "$CCN_TITLE" \
+        -subtitle "$CCN_SUBTITLE_NOTIFICATION" \
+        "${SOUND_ARG[@]}" \
+        -execute "osascript -e 'tell application \"iTerm2\"
     set _found to false
     repeat with w in windows
         repeat with t in tabs of w
             repeat with s in sessions of t
-                if tty of s contains "'"$TTY"'" then
+                if tty of s contains \"$TTY\" then
                     select t
                     activate
                     set _found to true
@@ -55,31 +60,25 @@ if [ "$CCN_TERMINAL" = "iterm2" ]; then
         if _found then exit repeat
     end repeat
     if not _found then activate
-end tell'
+end tell'" &
 else
     # Default: "terminal"
-    ACTIVATE_CMD='tell application "Terminal"
-    set _found to false
+    terminal-notifier \
+        -message "$MSG" \
+        -title "$CCN_TITLE" \
+        -subtitle "$CCN_SUBTITLE_NOTIFICATION" \
+        "${SOUND_ARG[@]}" \
+        -execute "osascript -e 'tell application \"Terminal\"
     repeat with w in windows
         repeat with t in tabs of w
-            if tty of t contains "'"$TTY"'" then
+            if tty of t contains \"$TTY\" then
                 set index of w to 1
                 set selected tab of w to t
                 activate
-                set _found to true
-                exit repeat
+                return
             end if
         end repeat
-        if _found then exit repeat
     end repeat
-    if not _found then activate
-end tell'
+    activate
+end tell'" &
 fi
-
-# Send notification (background so hook returns quickly)
-terminal-notifier \
-    -message "$MSG" \
-    -title "$CCN_TITLE" \
-    -subtitle "$CCN_SUBTITLE_NOTIFICATION" \
-    "${SOUND_ARG[@]}" \
-    -execute "$ACTIVATE_CMD" &

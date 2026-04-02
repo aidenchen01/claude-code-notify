@@ -120,7 +120,7 @@ with open(settings_path, 'r') as f:
     data = json.load(f)
 
 # Hook types that Claude Code supports
-hook_types = ['PreToolUse', 'PostToolUse', 'Notification', 'Stop']
+hook_types = ['Notification', 'Stop', 'TeammateIdle', 'PermissionRequest']
 changed = False
 
 for hook_type in hook_types:
@@ -129,9 +129,21 @@ for hook_type in hook_types:
     original = data['hooks'][hook_type]
     filtered = []
     for entry in original:
-        cmd = entry.get('command', '') if isinstance(entry, dict) else ''
-        # Remove entries whose command references a notify-*.sh in our hooks dir
-        if re.search(r'notify-[^/]*\.sh', cmd) and hooks_dir in cmd:
+        # Navigate nested structure: entry.hooks[].command
+        is_ccn = False
+        if isinstance(entry, dict):
+            inner_hooks = entry.get('hooks', [])
+            for h in inner_hooks:
+                cmd = h.get('command', '') if isinstance(h, dict) else ''
+                if re.search(r'notify-[^/]*\.sh', cmd) and hooks_dir in cmd:
+                    is_ccn = True
+                    break
+            # Also check flat structure for backwards compatibility
+            if not is_ccn:
+                cmd = entry.get('command', '')
+                if re.search(r'notify-[^/]*\.sh', cmd) and hooks_dir in cmd:
+                    is_ccn = True
+        if is_ccn:
             changed = True
         else:
             filtered.append(entry)

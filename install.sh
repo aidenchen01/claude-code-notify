@@ -212,7 +212,7 @@ fi
 #   Permission    -> hooks/notify-permission.sh    (settings.json: Notification — permission request)
 HOOK_EVENTS=("Notification" "Stop" "TeammateIdle" "PermissionRequest")
 HOOK_SCRIPTS=("notify-notification.sh" "notify-stop.sh" "notify-idle.sh" "notify-permission.sh")
-HOOK_JSON_EVENTS=("Notification" "Stop" "Notification" "Notification")
+HOOK_JSON_EVENTS=("Notification" "Stop" "TeammateIdle" "PermissionRequest")
 
 declare -a ENABLED_HOOKS
 
@@ -402,9 +402,21 @@ for h in hooks_json:
             cmds = existing
         elif isinstance(existing, dict) and 'command' in existing:
             cmds = [existing]
-        for cmd in cmds:
-            c = cmd.get('command','') if isinstance(cmd, dict) else str(cmd)
-            if 'claude-code-notify' not in c:
+        for entry in cmds:
+            # Navigate nested structure: entry.hooks[].command
+            is_ccn = False
+            if isinstance(entry, dict):
+                for inner in entry.get('hooks', []):
+                    c = inner.get('command', '') if isinstance(inner, dict) else ''
+                    if 'claude-code-notify' in c:
+                        is_ccn = True
+                        break
+                # Also check flat structure for backwards compatibility
+                if not is_ccn:
+                    c = entry.get('command', '')
+                    if 'claude-code-notify' in c:
+                        is_ccn = True
+            if not is_ccn:
                 conflicts.append(event)
                 break
 if conflicts:
@@ -457,9 +469,12 @@ hooks_cfg = settings["hooks"]
 for hook in hooks_to_add:
     event = hook["event"]
     new_entry = {
-        "type": "command",
-        "command": hook["command"],
-        "comment": marker
+        "hooks": [
+            {
+                "type": "command",
+                "command": hook["command"]
+            }
+        ]
     }
 
     if event not in hooks_cfg:
@@ -475,9 +490,16 @@ for hook in hooks_to_add:
             existing = []
 
         # Remove any previous claude-code-notify entries (avoid duplicates)
-        cleaned = [e for e in existing if not (
-            isinstance(e, dict) and marker in e.get("comment", "")
-        )]
+        def is_ccn_entry(e):
+            if not isinstance(e, dict):
+                return False
+            inner = e.get("hooks", [])
+            for h in inner:
+                if isinstance(h, dict) and "claude-code-notify" in h.get("command", ""):
+                    return True
+            return False
+
+        cleaned = [e for e in existing if not is_ccn_entry(e)]
 
         if merge_strategy == "replace":
             # Replace: only keep our entry
