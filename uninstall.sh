@@ -205,7 +205,8 @@ if [[ "$MRU_CURRENT" == "0" || "$MRU_CURRENT" == "false" ]]; then
   info "Space auto-rearrange (mru-spaces) is currently disabled."
   info "This was likely set by the installer to improve click-to-focus reliability."
   if confirm "Re-enable Space auto-rearrange?" n; then
-    defaults write com.apple.dock mru-spaces -bool true && killall Dock
+    defaults write com.apple.dock mru-spaces -bool true
+    killall Dock || true
     ok "Space auto-rearrange re-enabled."
   else
     info "Keeping Space auto-rearrange disabled."
