@@ -67,6 +67,39 @@ ok "All pre-flight checks passed."
 echo ""
 
 # ---------------------------------------------------------------------------
+# macOS Space auto-rearrange (mru-spaces)
+# ---------------------------------------------------------------------------
+# macOS can automatically rearrange Spaces based on recent use, which
+# interferes with click-to-focus Space switching.  Disabling it keeps
+# Space order fixed so AppleScript can reliably target the right desktop.
+MRU_CURRENT=$(defaults read com.apple.dock mru-spaces 2>/dev/null || echo "1")
+
+if [[ "$MRU_CURRENT" == "0" || "$MRU_CURRENT" == "false" ]]; then
+  ok "Space auto-rearrange already disabled."
+else
+  if [[ "$USE_DEFAULTS" == true ]]; then
+    info "Disabling Space auto-rearrange (mru-spaces)..."
+    defaults write com.apple.dock mru-spaces -bool false && killall Dock
+    ok "Space auto-rearrange disabled."
+  else
+    printf "${BOLD}  macOS Space Auto-Rearrange${NC}\n"
+    printf "      macOS can automatically rearrange Spaces based on recent use,\n"
+    printf "      which interferes with click-to-focus Space switching.\n"
+    printf "      Disabling this setting will restart the Dock momentarily.\n"
+    echo ""
+    if confirm "  Disable Space auto-rearrange?" y; then
+      info "Disabling Space auto-rearrange..."
+      defaults write com.apple.dock mru-spaces -bool false && killall Dock
+      ok "Space auto-rearrange disabled."
+    else
+      warn "Space auto-rearrange is still enabled."
+      warn "Click-to-focus may not switch Spaces reliably."
+    fi
+  fi
+fi
+echo ""
+
+# ---------------------------------------------------------------------------
 # Re-install detection
 # ---------------------------------------------------------------------------
 EXISTING_HOOKS=()
