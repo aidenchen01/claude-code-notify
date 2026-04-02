@@ -61,6 +61,32 @@ claude
 - **[Homebrew](https://brew.sh)** (used to install terminal-notifier)
 - **python3** (pre-installed on macOS; used to parse JSON from Notification hook stdin)
 
+## Recommended macOS Settings
+
+### Disable Space Auto-Rearrange
+
+For reliable click-to-focus Space switching, you should disable macOS's automatic Space rearrangement. When enabled, macOS reorders your Spaces based on recent use, which can cause the AppleScript click-to-focus callback to target the wrong desktop.
+
+> **Note:** `./install.sh` handles this automatically. The instructions below are for manual setup or verification.
+
+**Via command line:**
+
+```bash
+# Disable (recommended)
+defaults write com.apple.dock mru-spaces -bool false && killall Dock
+
+# Re-enable (if you want to restore the default behavior)
+defaults write com.apple.dock mru-spaces -bool true && killall Dock
+```
+
+**Via System Settings:**
+
+1. Open **System Settings** > **Desktop & Dock**
+2. Scroll down to **Mission Control**
+3. Turn off **"Automatically rearrange Spaces based on most recent use"**
+
+![macOS Desktop & Dock settings — disable Space auto-rearrange](docs/images/macos-desktop-dock-settings.png)
+
 ## How It Works — TTY Matching + AppleScript
 
 When Claude Code fires a [hook event](https://docs.anthropic.com/en/docs/claude-code/hooks), it runs one of the shell scripts installed in `~/.claude/hooks/`. Each hook script:
