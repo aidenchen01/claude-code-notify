@@ -79,7 +79,8 @@ if [[ "$MRU_CURRENT" == "0" || "$MRU_CURRENT" == "false" ]]; then
 else
   if [[ "$USE_DEFAULTS" == true ]]; then
     info "Disabling Space auto-rearrange (mru-spaces)..."
-    defaults write com.apple.dock mru-spaces -bool false && killall Dock
+    defaults write com.apple.dock mru-spaces -bool false
+    killall Dock || true
     ok "Space auto-rearrange disabled."
   else
     printf "${BOLD}  macOS Space Auto-Rearrange${NC}\n"
@@ -89,7 +90,8 @@ else
     echo ""
     if confirm "  Disable Space auto-rearrange?" y; then
       info "Disabling Space auto-rearrange..."
-      defaults write com.apple.dock mru-spaces -bool false && killall Dock
+      defaults write com.apple.dock mru-spaces -bool false
+      killall Dock || true
       ok "Space auto-rearrange disabled."
     else
       warn "Space auto-rearrange is still enabled."
